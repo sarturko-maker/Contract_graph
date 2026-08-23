@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Distributor Contract Graph v0.1.0</title>
+<meta name="description" content="The Distributor Contract Graph: a layered model for contract knowledge graphs in B2B distribution.">
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #f7f8f9;
+  --surface: #ffffff;
+  --surface-2: #eef0f3;
+  --text: #191c21;
+  --muted: #5a626e;
+  --border: #d5d9df;
+  --accent: #22345c;
+  --accent-soft: #e7ecf4;
+  --rule: #b9c0ca;
+  --strata-4: #ffffff; --strata-3: #f8f9fb; --strata-2: #f1f3f6;
+  --strata-1: #e8ebf0; --strata-0: #dee2e9;
+  --nt-rel: #6d3f9c; --nt-master: #1a4f8a; --nt-part: #0f6355; --nt-comp: #7a5200;
+  --nt-ch: #a03a1f;  --nt-wk: #145e75;    --nt-ord: #41620f;  --nt-sh: #6b4a2f;
+  --nt-ev: #4a5568;  --nt-sec: #8f2245;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
+  --sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #171a1f;
+    --surface: #1e222a;
+    --surface-2: #252a33;
+    --text: #e4e6ea;
+    --muted: #a4acb9;
+    --border: #343a45;
+    --accent: #9db3d8;
+    --accent-soft: #232c3d;
+    --rule: #444c59;
+    --strata-4: #1c2028; --strata-3: #21262f; --strata-2: #262c36;
+    --strata-1: #2c333e; --strata-0: #333b47;
+    --nt-rel: #c6a6ea; --nt-master: #8fb9e8; --nt-part: #5fc7b1; --nt-comp: #dcb45f;
+    --nt-ch: #f0a58f;  --nt-wk: #83cbdd;    --nt-ord: #acd06e;  --nt-sh: #d0ad90;
+    --nt-ev: #b6bfcc;  --nt-sec: #ef95af;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+}
+.wrap { max-width: 62rem; margin: 0 auto; padding: 0 1.5rem; }
+h1, h2, h3, h4 { font-family: var(--serif); font-weight: 600; line-height: 1.25; }
+h1 { font-size: 2.4rem; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
+h2 { font-size: 1.75rem; margin: 2.6rem 0 0.8rem; }
+h3 { font-size: 1.25rem; margin: 2rem 0 0.6rem; }
+h4 { font-size: 1.05rem; margin: 1.4rem 0 0.4rem; }
+p { margin: 0 0 1rem; max-width: 44rem; }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+code, kbd, samp { font-family: var(--mono); font-size: 0.86em; }
+.lede { font-size: 1.15rem; color: var(--muted); max-width: 44rem; }
+.skip {
+  position: absolute; left: -9999px; top: 0; background: var(--surface);
+  padding: 0.6rem 1rem; border: 2px solid var(--accent); z-index: 20;
+}
+.skip:focus { left: 1rem; top: 1rem; }
+
+header.masthead { border-bottom: 1px solid var(--border); padding: 3rem 0 2rem; background: var(--surface); }
+.version { font-family: var(--mono); font-size: 0.82rem; letter-spacing: 0.06em;
+  color: var(--muted); margin-bottom: 0.6rem; }
+.paths { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.5rem; padding: 0; list-style: none; }
+.paths li { flex: 1 1 18rem; border-left: 3px solid var(--rule); padding: 0.2rem 0 0.2rem 0.9rem; }
+.paths b { display: block; font-family: var(--serif); }
+.paths span { color: var(--muted); font-size: 0.95rem; }
+
+.invariant {
+  margin: 2.5rem 0; padding: 1.4rem 1.6rem; background: var(--accent-soft);
+  border: 1px solid var(--border); border-left: 5px solid var(--accent); border-radius: 3px;
+}
+.invariant .label {
+  font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 0.5rem;
+}
+.invariant p { margin: 0; max-width: 48rem; }
+.invariant p + p { margin-top: 0.8rem; }
+
+nav.strata { margin: 2.5rem 0 1rem; }
+nav.strata ol { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border);
+  border-radius: 3px; overflow: hidden; }
+nav.strata li { border-bottom: 1px solid var(--border); }
+nav.strata li:last-child { border-bottom: 0; }
+nav.strata a {
+  display: grid; grid-template-columns: 4.5rem 1fr; gap: 1rem; align-items: baseline;
+  padding: 0.85rem 1.1rem; text-decoration: none; color: inherit;
+  border-left: 6px solid transparent; transition: background 120ms ease;
+}
+nav.strata .code { font-family: var(--mono); font-weight: 700; color: var(--accent); }
+nav.strata .name { font-family: var(--serif); font-size: 1.1rem; }
+nav.strata .desc { display: block; color: var(--muted); font-size: 0.92rem; }
+nav.strata .l4 a { background: var(--strata-4); }
+nav.strata .l3 a { background: var(--strata-3); }
+nav.strata .l2 a { background: var(--strata-2); }
+nav.strata .l1 a { background: var(--strata-1); }
+nav.strata .l0 a { background: var(--strata-0); }
+nav.strata a:hover, nav.strata a:focus-visible { background: var(--accent-soft); }
+nav.strata a[aria-current="true"] { background: var(--accent-soft); border-left-color: var(--accent); }
+.bedrock { font-size: 0.85rem; color: var(--muted); margin-top: 0.6rem; }
+
+main section { padding-top: 1.5rem; border-top: 1px solid var(--border); margin-top: 3rem; }
+main section:first-of-type { border-top: 0; }
+.layer-tag {
+  font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted);
+}
+table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; font-size: 0.94rem; }
+th, td { text-align: left; padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--border);
+  vertical-align: top; }
+th { font-family: var(--sans); font-weight: 600; font-size: 0.82rem; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--rule); }
+tbody tr:hover { background: var(--surface-2); }
+.scroll { overflow-x: auto; }
+table.kinds td:nth-child(1), table.kinds th:nth-child(1) { width: 8rem; }
+table.kinds td:nth-child(2), table.kinds th:nth-child(2) { width: 40%; }
+table.kinds td:nth-child(3), table.kinds th:nth-child(3) { width: 4rem; }
+table.std td:nth-child(1), table.std th:nth-child(1) { width: 15%; }
+table.std td:nth-child(2), table.std th:nth-child(2) { width: 15%; }
+table.std td:nth-child(3), table.std th:nth-child(3) { width: 13%; }
+table.entities td:nth-child(1), table.entities th:nth-child(1) { width: 9rem; }
+table.entities td:nth-child(2), table.entities th:nth-child(2) { width: 9rem; }
+td code { white-space: nowrap; }
+
+ol.principles { counter-reset: p; list-style: none; padding: 0; margin: 1.2rem 0; }
+ol.principles li { counter-increment: p; position: relative; padding-left: 2.6rem;
+  margin-bottom: 1rem; max-width: 46rem; }
+ol.principles li::before {
+  content: counter(p); position: absolute; left: 0; top: 0.05rem;
+  font-family: var(--mono); font-size: 0.8rem; font-weight: 700; color: var(--accent);
+  border: 1px solid var(--rule); border-radius: 2px; width: 1.8rem; height: 1.8rem;
+  display: grid; place-items: center;
+}
+ol.principles b { font-family: var(--serif); font-size: 1.05rem; display: block; }
+
+.warn { border: 1px solid var(--rule); border-left: 5px solid var(--nt-ch); border-radius: 3px;
+  padding: 1rem 1.2rem; margin: 1.4rem 0; background: var(--surface); }
+.warn b { font-family: var(--serif); }
+.warn p:last-child { margin-bottom: 0; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem; padding: 0; margin: 1rem 0 1.6rem;
+  list-style: none; }
+.legend li { font-size: 0.92rem; display: flex; align-items: baseline; gap: 0.45rem; }
+.swatch { width: 0.85rem; height: 0.85rem; border-radius: 2px; display: inline-block;
+  flex: none; transform: translateY(1px); }
+.legend .term { font-family: var(--mono); font-size: 0.85rem; }
+.legend .gloss { color: var(--muted); }
+
+details {
+  border: 1px solid var(--border); border-radius: 3px; margin: 0.5rem 0; background: var(--surface);
+}
+details[open] { background: var(--surface); }
+summary {
+  cursor: pointer; padding: 0.7rem 1rem; font-family: var(--serif); font-size: 1.05rem;
+  list-style-position: inside;
+}
+summary:hover { background: var(--surface-2); }
+summary .fcode { font-family: var(--mono); font-size: 0.85rem; color: var(--accent);
+  font-weight: 700; margin-right: 0.5rem; }
+.details-body { padding: 0 1rem 1rem; border-top: 1px solid var(--border); }
+.details-body > p:first-child { margin-top: 1rem; }
+.dl-inline { margin: 0.6rem 0 0; font-size: 0.94rem; }
+.dl-inline dt { font-weight: 600; color: var(--muted); font-size: 0.82rem;
+  letter-spacing: 0.04em; text-transform: uppercase; margin-top: 0.7rem; }
+.dl-inline dd { margin: 0.15rem 0 0; }
+.dl-inline dd + dd { margin-top: 0.5rem; }
+
+pre.tree {
+  font-family: var(--mono); font-size: 0.82rem; line-height: 1.65; overflow-x: auto;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 3px;
+  padding: 0.9rem 1rem; margin: 1rem 0 0; white-space: pre;
+}
+pre.tree .tc { color: var(--rule); }
+pre.tree .ek { color: var(--muted); }
+pre.tree .ek-l { font-style: italic; }
+pre.tree .ek-t { letter-spacing: 0.02em; }
+pre.tree .ek-e { text-decoration: underline dotted; text-underline-offset: 2px; }
+pre.tree .nd { font-weight: 600; }
+pre.tree .ntag { font-weight: 400; opacity: 0.75; }
+pre.tree .pr { color: var(--muted); }
+pre.tree .xr { color: var(--nt-ch); font-style: italic; }
+.nt-rel { color: var(--nt-rel); } .nt-master { color: var(--nt-master); }
+.nt-part { color: var(--nt-part); } .nt-comp { color: var(--nt-comp); }
+.nt-ch { color: var(--nt-ch); } .nt-wk { color: var(--nt-wk); }
+.nt-ord { color: var(--nt-ord); } .nt-sh { color: var(--nt-sh); }
+.nt-ev { color: var(--nt-ev); } .nt-sec { color: var(--nt-sec); }
+.sw-rel { background: var(--nt-rel); } .sw-master { background: var(--nt-master); }
+.sw-part { background: var(--nt-part); } .sw-comp { background: var(--nt-comp); }
+.sw-ch { background: var(--nt-ch); } .sw-wk { background: var(--nt-wk); }
+.sw-ord { background: var(--nt-ord); } .sw-sh { background: var(--nt-sh); }
+.sw-ev { background: var(--nt-ev); } .sw-sec { background: var(--nt-sec); }
+
+.cat-head { margin-top: 2rem; }
+.controls { display: flex; gap: 0.6rem; margin: 1rem 0; flex-wrap: wrap; }
+.controls button {
+  font: inherit; font-size: 0.88rem; padding: 0.35rem 0.8rem; cursor: pointer;
+  background: var(--surface); color: var(--text); border: 1px solid var(--rule); border-radius: 3px;
+}
+.controls button:hover { background: var(--surface-2); }
+
+.callout { border: 1px solid var(--border); border-radius: 3px; padding: 1.2rem 1.4rem;
+  background: var(--surface); margin: 1.2rem 0; }
+.callout h3 { margin-top: 0; }
+.xcat { list-style: none; padding: 0; margin: 0; }
+.xcat li { padding: 0.8rem 0; border-bottom: 1px dashed var(--rule); max-width: 48rem; }
+.xcat li:last-child { border-bottom: 0; padding-bottom: 0; }
+.xcat b { font-family: var(--serif); font-size: 1.05rem; }
+.xcat .edges { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); }
+
+ol.process { max-width: 46rem; padding-left: 1.4rem; }
+ol.process li { margin-bottom: 0.6rem; }
+
+.repo { font-family: var(--mono); font-size: 0.88rem; }
+.repo td:first-child { white-space: nowrap; color: var(--accent); }
+
+footer { border-top: 1px solid var(--border); margin-top: 3.5rem; padding: 2rem 0 3rem;
+  color: var(--muted); font-size: 0.92rem; background: var(--surface); }
+footer p { max-width: 48rem; }
+.status-note { color: var(--muted); font-size: 0.88rem; margin: 0.2rem 0 1rem; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important; }
+}
+@media (max-width: 40rem) {
+  body { font-size: 16px; }
+  h1 { font-size: 1.9rem; }
+  nav.strata a { grid-template-columns: 1fr; gap: 0.15rem; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="masthead"><div class="wrap">
+<p class="version">Open standard, DCG v0.1.0</p>
+<h1>Distributor Contract Graph</h1>
+<p class="lede">A layered model for contract knowledge graphs in B2B distribution: five layers, a nine-type master data spine, thirty-six contract families and six overlays, held together by one invariant that survives even when everything else about a document is unknown.</p>
+<ul class="paths">
+<li><b>Legal</b><span>Start at the invariant, then the families.</span></li>
+<li><b>Data science</b><span>Start at the spine, then the registries and the sample graph.</span></li>
+</ul>
+</div></header>
+<div class="wrap">
+<div class="invariant" role="note" aria-labelledby="inv-label">
+<span class="label" id="inv-label">The survival invariant</span>
+<p>Every contract node carries, from the moment it enters the graph, party-to edges pointing at entity_id for each signatory (ours and theirs) and, where it governs or constitutes trading, a governs or ordered-by edge pointing at account_id. Enforcement is at ingestion: where party resolution fails, the edge points at a provisional entity flagged for review, never at nothing. Amendments and schedules inherit party edges from their structural parent. Degradation ladder: full family classification plus content; else function tag only; else party and account edges plus dates. The worst case is still a working graph, and everything else is enrichment.</p>
+</div>
+<nav class="strata" aria-label="The five layers">
+<h2 id="layers-heading">The five layers</h2>
+<p>Read the stack from the bottom up. Master data is the bedrock: everything above it resolves down to an entity, an account or a product, and a layer that cannot resolve downwards is not yet part of the graph.</p>
+<ol>
+<li class="l4"><a href="#layer-l4"><span class="code">L4</span><span><span class="name">Transaction</span><span class="desc">Orders, responses, invoices and claims. What actually moved.</span></span></a></li>
+<li class="l3"><a href="#layer-l3"><span class="code">L3</span><span><span class="name">Content</span><span class="desc">Clauses, classifications, term facts and obligations. What the paper says.</span></span></a></li>
+<li class="l2"><a href="#layer-l2"><span class="code">L2</span><span><span class="name">Agreement</span><span class="desc">Instruments and the edges between them. The family trees.</span></span></a></li>
+<li class="l1"><a href="#layer-l1"><span class="code">L1</span><span><span class="name">Master data</span><span class="desc">Entities, relationships, accounts, sites, products, people.</span></span></a></li>
+<li class="l0"><a href="#layer-l0"><span class="code">L0</span><span><span class="name">Reference</span><span class="desc">Countries, currencies, incoterms, classifications, identifier schemes.</span></span></a></li>
+</ol>
+<p class="bedrock">L4 sits on L3, on L2, on L1, on L0. The relationship node straddles the L1 and L2 boundary: anchored in master data, used by the agreement layer.</p>
+</nav>
+<main id="content">
+<section id="layer-l0" aria-labelledby="h-l0">
+<p class="layer-tag">Layer 0</p>
+<h2 id="h-l0">Reference</h2>
+<p>Closed lists that everything else points at. Nothing here is negotiated and nothing here belongs to a counterparty. Reference data is boring on purpose: it is the layer that lets two systems agree on what Germany means.</p>
+<div class="scroll"><table>
+<thead><tr><th scope="col">Node type</th><th scope="col">Definition</th><th scope="col">Examples</th><th scope="col">Standard</th></tr></thead><tbody>
+<tr><td><code>country</code></td><td>ISO 3166 country</td><td><code>DE; NL; GB; US</code></td><td>ISO 3166</td></tr>
+<tr><td><code>currency</code></td><td>ISO 4217 currency</td><td><code>EUR; USD; GBP</code></td><td>ISO 4217</td></tr>
+<tr><td><code>incoterm</code></td><td>ICC Incoterms 2020 rule</td><td><code>DAP; EXW; FCA</code></td><td>ICC Incoterms 2020</td></tr>
+<tr><td><code>classification_code</code></td><td>Product classification entry</td><td><code>UNSPSC 26121600; ETIM EC000123</code></td><td>UNSPSC or ETIM</td></tr>
+<tr><td><code>identifier_scheme</code></td><td>Registry of identifier schemes (ISO 6523 ICDs and others)</td><td><code>LEI; DUNS; GLN; VAT; EORI; national registry</code></td><td>ISO 6523 and others</td></tr>
+</tbody></table></div>
+</section>
+<section id="layer-l1" aria-labelledby="h-l1">
+<p class="layer-tag">Layer 1</p>
+<h2 id="h-l1">Master data</h2>
+<p>The spine. Nine entity types and eight principles, and every one of the principles exists because getting it wrong has a known cost. Category (customer, supplier, vendor) is a property of the relationship, never of the legal entity: one real-world party can hold all three at once through three relationship nodes.</p>
+<h3>The eight principles</h3>
+<ol class="principles">
+<li><b>Parties are legal entities, accounts are trading arrangements</b>Contracts attach to entities and transactions to accounts. Mixing the two is the most common modelling error and the reason so many systems cannot answer who is actually bound.</li>
+<li><b>Symmetry</b>Our side and theirs use the same types, separated by an is_ours flag. There is no second schema for the house entities.</li>
+<li><b>Identity is plural</b>Identity is a set of scheme plus value claims, each with a source and a validity window, never one ID field.</li>
+<li><b>Two hierarchies, never conflated</b>Legal ownership (owns) and commercial grouping (member_of) are different edges. A buying group is not a parent company.</li>
+<li><b>Roles are edges, not types</b>Ship-to, bill-to, payer, signatory and guarantor are edges with properties. Creating a node type per role multiplies the model without adding information.</li>
+<li><b>Time on every edge</b>Every edge carries validity dates, and where the question is bi-temporal, recorded_at as the second axis: when the fact was true, and when the graph learned it.</li>
+<li><b>The graph references, never masters</b>ERP or MDM stays the system of record. Every node carries source_system and source_key, and the graph is rebuilt from them.</li>
+<li><b>Minimal spine, open extensions</b>Nine entity types carry the load. Anything else belongs in an extension, not in the spine.</li>
+</ol>
+<h3>The nine entity types</h3>
+<div class="scroll"><table class="entities">
+<thead><tr><th scope="col">Type</th><th scope="col">Name</th><th scope="col">Definition</th><th scope="col">Examples</th></tr></thead><tbody>
+<tr><td><code>legal_entity</code></td><td>Legal entity</td><td>One node per legal person, ours and theirs alike; ours flagged, never a separate model</td><td><code>DistributorCo GmbH; GlobalCo Inc</code></td></tr>
+<tr><td><code>identifier</code></td><td>Identifier</td><td>Scheme plus value claim with source and validity; never a single ID field</td><td><code>LEI 5299...; DUNS 15-048-3782</code></td></tr>
+<tr><td><code>relationship</code></td><td>Relationship</td><td>Category anchor per counterparty group per category; anchored in master data, used by the agreement layer</td><td><code>GlobalCo customer relationship</code></td></tr>
+<tr><td><code>account</code></td><td>Account</td><td>Trading arrangement: belongs to one of their entities, held with one of our org units</td><td><code>Sold-to account 10001</code></td></tr>
+<tr><td><code>site</code></td><td>Site</td><td>Location with a function: HQ, warehouse, ship-to, consignment location</td><td><code>Munich plant ship-to</code></td></tr>
+<tr><td><code>product</code></td><td>Product</td><td>Our SKU with manufacturer, MPN, GTIN, classification</td><td><code>SKU CBL-001</code></td></tr>
+<tr><td><code>person</code></td><td>Person</td><td>Contacts, signatories, e-commerce users</td><td><code>Anna Weber, signatory</code></td></tr>
+<tr><td><code>org_unit</code></td><td>Org unit</td><td>Our operational structure hanging off our legal entities</td><td><code>DE sales org; group procurement</code></td></tr>
+<tr><td><code>group</code></td><td>Group</td><td>Commercial grouping only (buying group, franchise, global account programme); never legal ownership</td><td><code>EuroBuy buying group</code></td></tr>
+</tbody></table></div>
+<div class="warn">
+<p><b>Ownership is not grouping.</b> Legal ownership travels along <code>owns</code> edges between legal entities: who controls whom, whose balance sheet consolidates, who can bind a subsidiary. Commercial grouping travels along <code>member_of</code> edges into a group node: a buying group, a franchise network, a global account programme.</p>
+<p>Conflating the two produces the two classic errors in opposite directions: granting a buying group member the parent company's negotiated terms, and refusing a genuine subsidiary the terms its parent signed for it. Keep them as two hierarchies and both questions stay answerable.</p>
+</div>
+</section>
+<section id="layer-l2" aria-labelledby="h-l2">
+<p class="layer-tag">Layer 2</p>
+<h2 id="h-l2">Agreement</h2>
+<p>Instruments and the edges between them. One node per legal instrument that can change independently. Executed instruments are nodes, and so are instruments binding by notice (status: notified); drafts are not. The file is a property of the instrument, not a node in its own right. Every node has exactly one structural parent, and edges are directed with the dependent pointing at what it depends on.</p>
+<p>Structural edges build the tree. Lifecycle edges change nodes over time. Reference edges cut across branches, and they are the reason this is a graph rather than a folder structure.</p>
+<h3>Node types in the trees</h3>
+<ul class="legend">
+<li><span class="swatch sw-rel"></span><span class="term nt-rel">rel</span><span class="gloss">relationship</span></li>
+<li><span class="swatch sw-master"></span><span class="term nt-master">master</span><span class="gloss">master-level</span></li>
+<li><span class="swatch sw-part"></span><span class="term nt-part">part</span><span class="gloss">participation</span></li>
+<li><span class="swatch sw-comp"></span><span class="term nt-comp">comp</span><span class="gloss">component</span></li>
+<li><span class="swatch sw-ch"></span><span class="term nt-ch">ch</span><span class="gloss">change</span></li>
+<li><span class="swatch sw-wk"></span><span class="term nt-wk">wk</span><span class="gloss">work instrument</span></li>
+<li><span class="swatch sw-ord"></span><span class="term nt-ord">ord</span><span class="gloss">order / transaction</span></li>
+<li><span class="swatch sw-sh"></span><span class="term nt-sh">sh</span><span class="gloss">shared / by reference</span></li>
+<li><span class="swatch sw-ev"></span><span class="term nt-ev">ev</span><span class="gloss">evidence</span></li>
+<li><span class="swatch sw-sec"></span><span class="term nt-sec">sec</span><span class="gloss">security</span></li>
+</ul>
+<h3>Edge kinds</h3>
+<div class="scroll"><table class="kinds">
+<thead><tr><th scope="col">Kind</th><th scope="col">What it does</th><th scope="col">Count</th><th scope="col">Examples</th></tr></thead><tbody>
+<tr><td>structural</td><td>Builds the tree. Child points at parent, one structural parent per node.</td><td>10</td><td><code>forms_part_of, accedes_to, placed_under, released_under</code></td></tr>
+<tr><td>lifecycle</td><td>Changes a node over time: amends, supersedes, varies, extends, terminates.</td><td>8</td><td><code>amends, supersedes, varies, extends</code></td></tr>
+<tr><td>reference</td><td>Cuts across branches and across categories. The reason the graph exists.</td><td>10</td><td><code>incorporates, prevails_over, conflicts_with, flows_down_to</code></td></tr>
+<tr><td>party</td><td>Points an instrument at a signatory legal entity. Half one of the invariant.</td><td>2</td><td><code>party_to, guaranteed_by</code></td></tr>
+<tr><td>transaction</td><td>Points a transaction at an account or at what it answers. Half two.</td><td>4</td><td><code>ordered_by, settled_by, claimed_under, responds_to</code></td></tr>
+<tr><td>masterdata</td><td>Points the agreement layer down into the spine: territories, sites, products, org units.</td><td>17</td><td><code>covers_product, covers_territory, covers_site, anchored_to</code></td></tr>
+<tr><td>content</td><td>Points a document at its clauses, and clauses at facts and obligations.</td><td>8</td><td><code>has_clause, tagged_as, has_term, has_obligation</code></td></tr>
+<tr><td>evidence</td><td>Points a non-contractual record at what it evidences, with a validity window.</td><td>1</td><td><code>evidences</code></td></tr>
+</tbody></table></div>
+<p>Sixty edge types in all, listed in full with direction rules and time properties in <code>registries/edge_types.csv</code>.</p>
+<h3>The thirty-six families</h3>
+<p>Family membership is decided by structure, never by the title on the cover. The title is recorded as an alias and used as a hint, never as a decision. Five classifying properties on master-level nodes carry the tests: scope, paper, commercial completeness, commitment and appointment.</p>
+<div id="families-controls"></div>
+<h4 class="cat-head">Customers (13 families)</h4>
+<details id="fam-c1">
+<summary><span class="fcode">C1.</span>Global master with local participation</summary>
+<div class="details-body">
+<p>This family exists where one negotiated agreement is intended to be adopted by multiple legal entities, and adoption happens through a per-entity instrument, signed or deemed. The defining structure is the participation layer sitting between the master and local trading. If that layer exists the contract belongs here, whatever the cover page says and whoever&#x27;s paper it is on. A group agreement merely referenced by local entities with no adoption mechanism is C2 with scope recorded as group-referenced.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: GlobalCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-master">Global MSA 2021</span> <span class="ntag nt-master">[master-level]</span> <span class="pr">{scope: global, paper: ours, complete: no}</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Sch 1 products</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Sch 2 pricing v3</span> <span class="ntag nt-comp">[component]</span> <span class="xr">~&gt; supersedes v2</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">DPA</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    ├── </span><span class="ek ek-l" title="lifecycle edge">(amends)</span> <span class="nd nt-ch">Amendment 1</span> <span class="ntag nt-ch">[change]</span> <span class="xr">~&gt; amends MSA cl.14</span>
+<span class="tc">    ├── </span><span class="ek ek-l" title="lifecycle edge">(varies)</span> <span class="nd nt-ch">Side letter</span> <span class="ntag nt-ch">[change]</span> <span class="pr">{flow-down: per accession}</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(accedes to)</span> <span class="nd nt-part">LPA Germany</span> <span class="ntag nt-part">[participation]</span> <span class="pr">{status: signed}</span>
+<span class="tc">    │   ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Local sch A sites</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    │   ├── </span><span class="ek ek-l" title="lifecycle edge">(amends)</span> <span class="nd nt-ch">Local amendment 1</span> <span class="ntag nt-ch">[change]</span> <span class="xr">~&gt; varies MSA cl.14</span>
+<span class="tc">    │   └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-ord">PO 4471 ... PO 9120</span> <span class="ntag nt-ord">[order / transaction]</span>
+<span class="tc">    └── </span><span class="ek ek-s" title="structural edge">(accedes to)</span> <span class="nd nt-part">LPA Netherlands</span> <span class="ntag nt-part">[participation]</span> <span class="pr">{status: deemed}</span>
+<span class="tc">        └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-ord">POs</span> <span class="ntag nt-ord">[order / transaction]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>scope: global | paper: ours or theirs | commercial completeness: no | participation status: signed or deemed | flow-down: yes, no or per accession</dd>
+<dt>Complexity</dt><dd>Two amendment chains, global and local, that drift apart; the accession edge carries the flow-down property, or each global amendment gets explicit flows-down-to edges to the LPAs that adopted it.</dd><dd>Deemed participation (affiliates may order hereunder) still creates a participation node per entity, status deemed rather than signed.</dd><dd>The varies edges from local amendments to master clauses are the highest-value edges in the family.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-c2">
+<summary><span class="fcode">C2.</span>Negotiated master, single scope</summary>
+<div class="details-body">
+<p>One negotiated instrument carrying relationship terms (liability, warranty, compliance) for a single legal entity or a group by loose reference, with commercials left to each transaction. No participation layer and no self-executing commercial layer. Either paper: a customer-paper procurement master is this family with paper recorded as theirs and its own alias set.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: RegionalCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-master">Supply agreement 2020</span> <span class="ntag nt-master">[master-level]</span> <span class="pr">{scope: single, paper: theirs, complete: no}</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Exhibit A pricing basis</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(incorporates)</span> <span class="nd nt-sh">Code of conduct (URL)</span> <span class="ntag nt-sh">[shared / by reference]</span> <span class="pr">{captured 2024-06}</span>
+<span class="tc">    ├── </span><span class="ek ek-l" title="lifecycle edge">(amends)</span> <span class="nd nt-ch">Addendum 1</span> <span class="ntag nt-ch">[change]</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Addendum 2 (new products)</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-wk">Quotation Q-310</span> <span class="ntag nt-wk">[work instrument]</span>
+<span class="tc">        └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-ord">PO 8802</span> <span class="ntag nt-ord">[order / transaction]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>scope: single or group-referenced | paper: ours, theirs or hybrid | commercial completeness: no | commitment: none to target</dd>
+<dt>Complexity</dt><dd>The word Addendum names two different node types here: an amendment and a new component. Type is assigned by what the document does.</dd><dd>URL-incorporated policies change without signature, so every incorporates edge carries version and capture date.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-c3">
+<summary><span class="fcode">C3.</span>Framework with call-off</summary>
+<div class="details-body">
+<p>A master plus a versioned commercial layer (price list, blanket structure) that makes call-offs self-executing: an order alone completes a contract on pre-agreed commercials. The test against C2 is commercial completeness. Mostly customer paper in practice.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: MidCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-master">Framework supply agreement 2019</span> <span class="ntag nt-master">[master-level]</span> <span class="pr">{complete: yes}</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Price list 2025</span> <span class="ntag nt-comp">[component]</span> <span class="xr">~&gt; supersedes 2023, 2021</span>
+<span class="tc">    ├── </span><span class="ek ek-l" title="lifecycle edge">(amends)</span> <span class="nd nt-ch">Price adjustment letter 2022</span> <span class="ntag nt-ch">[change]</span> <span class="pr">{indexed}</span>
+<span class="tc">    ├── </span><span class="ek ek-l" title="lifecycle edge">(extends)</span> <span class="nd nt-ch">Extension letter 2024</span> <span class="ntag nt-ch">[change]</span> <span class="pr">{+2 years}</span>
+<span class="tc">    ├── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-ord">Blanket PO 1001</span> <span class="ntag nt-ord">[order / transaction]</span>
+<span class="tc">    │   └── </span><span class="ek ek-t" title="transactional edge">(released under)</span> <span class="nd nt-ord">Release 1, release 2 ...</span> <span class="ntag nt-ord">[order / transaction]</span>
+<span class="tc">    └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-ord">PO 2207 (standalone)</span> <span class="ntag nt-ord">[order / transaction]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>commercial completeness: yes | commitment: often volume or target | scope: usually single</dd>
+<dt>Complexity</dt><dd>Almost all change happens in schedules and letters, not formal amendments; the supersedes chain on the price list is the family&#x27;s spine.</dd><dd>The blanket order inserts a level between framework and delivery: framework, blanket, release.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-c4">
+<summary><span class="fcode">C4.</span>Account-based trading on standard terms</summary>
+<div class="details-body">
+<p>No negotiated master. Where a Customer Account Application Form (CAF) is in place it binds the customer into our terms of sale and acts as a quasi-framework anchoring the account. Where it is absent, each order is a battle of the forms resolved order by order. Customer Vendor Registration Forms attempting the mirror move are recorded as rival instruments at the same level. By volume this is the biggest family a distributor has.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: SmallCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">├── </span><span class="nd nt-master">CAF (account application) 2022</span> <span class="ntag nt-master">[master-level]</span>
+<span class="tc">│   ├── </span><span class="ek ek-s" title="structural edge">(incorporates)</span> <span class="nd nt-sh">Terms of sale v2023</span> <span class="ntag nt-sh">[shared / by reference]</span> <span class="xr">~&gt; supersedes v2019</span>
+<span class="tc">│   ├── </span><span class="ek ek-s" title="structural edge">(rival instrument)</span> <span class="nd nt-master">Their vendor registration form</span> <span class="ntag nt-master">[master-level]</span> <span class="xr">~&gt; conflicts with CAF</span>
+<span class="tc">│   └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-wk">Quotation Q-5561</span> <span class="ntag nt-wk">[work instrument]</span>
+<span class="tc">│       └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-ord">PO 77812</span> <span class="ntag nt-ord">[order / transaction]</span>
+<span class="tc">└── </span><span class="ek ek-n" title="root edge">(no CAF:)</span> <span class="nd nt-ord">PO 78001 (their terms)</span> <span class="ntag nt-ord">[order / transaction]</span> <span class="xr">~&gt; conflicts with ToS</span>
+<span class="tc">    └── </span><span class="ek ek-t" title="transactional edge">(responds to)</span> <span class="nd nt-ord">Order acknowledgement</span> <span class="ntag nt-ord">[order / transaction]</span> <span class="pr">{last shot: ours}</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>anchor present: yes or no | terms version in force: by order date | last shot: ours or theirs per order</dd>
+<dt>Complexity</dt><dd>Each order must point at the version of the shared terms in force on its date; the shared terms node has thousands of incoming edges, which is where the structure stops being a tree.</dd><dd>Battle of the forms is a conflicts-with edge carrying a last-shot property, resolved per order, never per relationship.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-c5">
+<summary><span class="fcode">C5.</span>Supply-chain and value-added services</summary>
+<div class="details-body">
+<p>Services that change or prepare the product itself: staging, kitting, cutting, configuration, labelling, testing. Usually a schedule under a C1 to C3 master, sometimes a standalone VAS agreement. Distinct from C6 because the deliverable is the modified product flowing through the ordinary order stream, not a scoped project.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: (any customer)</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-master">Master (C1 to C3) or standalone VAS agreement</span> <span class="ntag nt-master">[master-level]</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">VAS schedule</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    │   ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Kitting spec, cutting tolerances</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    │   └── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Labelling and packaging spec</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-ord">POs</span> <span class="ntag nt-ord">[order / transaction]</span> <span class="xr">~&gt; reference VAS lines</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>attachment: schedule under C1 to C3, or standalone | pricing: per line, per operation or bundled</dd>
+<dt>Complexity</dt><dd>Specifications live under change control and version faster than the master; the supersedes chain sits at spec level.</dd><dd>POs must reference the VAS lines, so the transaction layer carries edges into the schedule, not just the master.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-c6">
+<summary><span class="fcode">C6.</span>General services and works</summary>
+<div class="details-body">
+<p>Services with a defined scope delivered as projects: installation, commissioning, design, general contracting. The shape is master to SOW to change order, with pricing per SOW or quote; rate cards are rare in distribution. Includes standalone SOWs for design work (racking layout, wiring layout, assembly design) placed under standard terms with no master at all.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: ServiceCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">├── </span><span class="nd nt-master">Services MSA 2022</span> <span class="ntag nt-master">[master-level]</span>
+<span class="tc">│   ├── </span><span class="ek ek-s" title="structural edge">(agreed under)</span> <span class="nd nt-wk">SOW 1 racking design</span> <span class="ntag nt-wk">[work instrument]</span>
+<span class="tc">│   │   ├── </span><span class="ek ek-l" title="lifecycle edge">(amends)</span> <span class="nd nt-ch">Change order 1</span> <span class="ntag nt-ch">[change]</span>
+<span class="tc">│   │   └── </span><span class="ek ek-e" title="evidence edge">(evidences)</span> <span class="nd nt-ev">Acceptance certificate</span> <span class="ntag nt-ev">[evidence]</span>
+<span class="tc">│   └── </span><span class="ek ek-s" title="structural edge">(agreed under)</span> <span class="nd nt-wk">SOW 2 installation</span> <span class="ntag nt-wk">[work instrument]</span> <span class="pr">{precedence: SOW}</span>
+<span class="tc">└── </span><span class="nd nt-wk">Standalone SOW (system design)</span> <span class="ntag nt-wk">[work instrument]</span> <span class="xr">~&gt; incorporates ToS</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>precedence: per SOW (SOW over master or master over SOW) | pricing: per SOW or quote | standalone SOW: incorporates shared terms</dd>
+<dt>Complexity</dt><dd>Change orders amend the SOW, not the master; the SOW-versus-master precedence can differ per SOW and is a property, not an assumption.</dd><dd>Installation work is typically subcontracted, which creates back-to-back edges into S10.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-c7">
+<summary><span class="fcode">C7.</span>Industry model form projects</summary>
+<div class="details-body">
+<p>Project supply or subcontract on an industry model form: NEC, JCT, FIDIC with schedules of amendments. Main-contract conditions are stepped down by incorporation, often without the distributor ever holding the main contract, which is flagged on the incorporates edge. Bonds and collateral warranties attach through the security overlay.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: MainContractorCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-master">NEC subcontract</span> <span class="ntag nt-master">[master-level]</span> <span class="pr">{paper: model form + amendments}</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(incorporates)</span> <span class="nd nt-sh">Main contract conditions</span> <span class="ntag nt-sh">[shared / by reference]</span> <span class="pr">{held: no, flag}</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Scope, programme, BoM schedules</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    ├── </span><span class="ek ek-l" title="lifecycle edge">(amends)</span> <span class="nd nt-ch">Variation order 1, 2</span> <span class="ntag nt-ch">[change]</span>
+<span class="tc">    ├── </span><span class="ek ek-e" title="evidence edge">(secured by)</span> <span class="nd nt-sec">Performance bond, collateral warranty</span> <span class="ntag nt-sec">[security]</span> <span class="xr">~&gt; security overlay O1</span>
+<span class="tc">    └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-ord">Call-offs / POs</span> <span class="ntag nt-ord">[order / transaction]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>paper: model form | model form: NEC, JCT, FIDIC, other | main contract held: yes or no</dd>
+<dt>Complexity</dt><dd>The incorporated main-contract conditions may not be in the file; the flag on the edge is the risk register entry.</dd><dd>Bonds and warranties have their own lifecycle (expiry, release, calls) independent of the subcontract.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-c8">
+<summary><span class="fcode">C8.</span>EPC exceptions pattern</summary>
+<div class="details-body">
+<p>An EPC contractor puts its terms in front of us at bid stage and asks for a list of exceptions. The exceptions and clarifications list, in whatever form it takes, is memorialised in special conditions. The executed instrument is a layered, pre-agreed PO incorporating general conditions, special conditions prevailing over them, and a body of technical exhibits. The family question is whether the exceptions list survives as its own instrument or merges into the special conditions; this model keeps it alive as a node with a memorialised-in edge.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: EPCCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">├── </span><span class="nd nt-ch">Exceptions and clarifications list</span> <span class="ntag nt-ch">[change]</span> <span class="xr">~&gt; memorialised in SC</span>
+<span class="tc">└── </span><span class="nd nt-ord">PO (layered, pre-agreed)</span> <span class="ntag nt-ord">[order / transaction]</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(incorporates)</span> <span class="nd nt-sh">General conditions (theirs)</span> <span class="ntag nt-sh">[shared / by reference]</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(incorporates)</span> <span class="nd nt-comp">Special conditions</span> <span class="ntag nt-comp">[component]</span> <span class="xr">~&gt; prevails over GC</span>
+<span class="tc">    └── </span><span class="ek ek-s" title="structural edge">(incorporates)</span> <span class="nd nt-comp">Technical exhibits and schedules</span> <span class="ntag nt-comp">[component]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>paper: theirs | precedence chain: SC over GC over exhibits (verify per deal) | exceptions list: survives or merged</dd>
+<dt>Complexity</dt><dd>The PO is the execution event for the whole stack, so its incorporates edges carry the entire contract.</dd><dd>Prevails-over edges matter more than the tree here; a wrong precedence chain is the family&#x27;s characteristic failure.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-c9">
+<summary><span class="fcode">C9.</span>Consignment, VMI, DLF and integrated supply</summary>
+<div class="details-body">
+<p>Our stock held at the customer&#x27;s site with title passing on consumption. VMI adds our management of replenishment; DLF (direct line feed) adds our personnel on site filling bins, racks or any other min/max system. Integrated supply and in-plant store variants extend the same shape. The defining structure is site schedules and min/max lists changing monthly under a stable master, settled against consumption reports.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: PlantCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-master">Consignment / VMI / DLF agreement</span> <span class="ntag nt-master">[master-level]</span> <span class="pr">{on-site labour: DLF only}</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Site schedule per location</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Min/max bin list</span> <span class="ntag nt-comp">[component]</span> <span class="xr">~&gt; supersedes monthly</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Replenishment and buy-back terms</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    └── </span><span class="ek ek-e" title="evidence edge">(evidences)</span> <span class="nd nt-ev">Consumption reports</span> <span class="ntag nt-ev">[evidence]</span>
+<span class="tc">        └── </span><span class="ek ek-t" title="transactional edge">(settled by)</span> <span class="nd nt-ord">Invoices</span> <span class="ntag nt-ord">[order / transaction]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>title transfer: on consumption | on-site labour: none, VMI-managed or DLF | site link: covers-site edges into master data</dd>
+<dt>Complexity</dt><dd>The min/max list supersedes monthly; treat it as a versioned component or the graph drowns in amendments.</dd><dd>Site schedules carry covers-site edges into master data, which is what makes site-level questions answerable.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-c10">
+<summary><span class="fcode">C10.</span>Reseller and sub-distributor</summary>
+<div class="details-body">
+<p>The customer resells onward. Territory and product schedules constrain the appointment, and vendor end-user terms flow down through us into the customer&#x27;s tree, which creates deliberate edges from S1 shared nodes into this family.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: DealerCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-master">Reseller agreement</span> <span class="ntag nt-master">[master-level]</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Territory and product schedules</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(incorporates)</span> <span class="nd nt-sh">Vendor end-user terms</span> <span class="ntag nt-sh">[shared / by reference]</span> <span class="xr">~&gt; flows down from S1</span>
+<span class="tc">    └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-ord">POs</span> <span class="ntag nt-ord">[order / transaction]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>appointment: yes (by us) | territory and product constraints: schedule level | flow-down source: S1 family</dd>
+<dt>Complexity</dt><dd>The flows-down-to edges from vendor terms are cross-category and cross-relationship; they are exactly what a folder structure cannot show.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-c11">
+<summary><span class="fcode">C11.</span>Public sector frameworks</summary>
+<div class="details-body">
+<p>An awarded framework that is not itself a contract to supply; each authority&#x27;s call-off is. Authorities fan out under the framework like LPAs under a master. Lots and call-offs are UK-flavoured terminology; the structure travels across jurisdictions even where the names do not, so jurisdiction is a property, and OCDS is available as an optional adapter.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: Authority framework</span> <span class="ntag nt-rel">[relationship]</span> <span class="pr">{jurisdiction: UK}</span>
+<span class="tc">└── </span><span class="nd nt-master">Framework agreement</span> <span class="ntag nt-master">[master-level]</span>
+<span class="tc">    └── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Lot 2</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">        ├── </span><span class="ek ek-s" title="structural edge">(called off under)</span> <span class="nd nt-master">Call-off contract, authority A</span> <span class="ntag nt-master">[master-level]</span>
+<span class="tc">        │   └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-wk">Order form</span> <span class="ntag nt-wk">[work instrument]</span>
+<span class="tc">        │       └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-ord">POs</span> <span class="ntag nt-ord">[order / transaction]</span>
+<span class="tc">        └── </span><span class="ek ek-s" title="structural edge">(called off under)</span> <span class="nd nt-master">Call-off contract, authority B</span> <span class="ntag nt-master">[master-level]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>jurisdiction: ISO 3166 | lot structure: yes or no | call-off basis: direct award or mini-competition</dd>
+<dt>Complexity</dt><dd>The framework alone creates no supply obligation; agents must not treat it as a governing master for orders that lack a call-off.</dd><dd>Each calling-off authority is a distinct legal entity with its own party edges into master data.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-c12">
+<summary><span class="fcode">C12.</span>E-commerce accounts</summary>
+<div class="details-body">
+<p>A registered web account governed by webshop terms, standard or negotiated; users attach to the account and orders attach through it. Distinct from EDI, API and PunchOut, which are channels usually documented as a schedule inside another family (overlay O5) because an underlying contract is typically negotiated. Agent-based ordering is a reserved future channel type.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: WebBuyerCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-master">E-commerce account</span> <span class="ntag nt-master">[master-level]</span> <span class="pr">{master data link}</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(governed by)</span> <span class="nd nt-sh">Webshop terms v2026</span> <span class="ntag nt-sh">[shared / by reference]</span> <span class="xr">~&gt; or negotiated agreement</span>
+<span class="tc">    ├── </span><span class="ek ek-e" title="evidence edge">(attached to)</span> <span class="nd nt-ev">Users (authorised buyers)</span> <span class="ntag nt-ev">[evidence]</span>
+<span class="tc">    └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-ord">Web orders</span> <span class="ntag nt-ord">[order / transaction]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>terms: standard or negotiated | users: person nodes with user-of edges | channel overlays: O5 where EDI, API or PunchOut added</dd>
+<dt>Complexity</dt><dd>Click-accept is the execution event; capture date and version matter more than signature.</dd><dd>Thousands of accounts share one terms node, the same many-to-one shape as C4.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-c13">
+<summary><span class="fcode">C13.</span>Programmes and pricing letters</summary>
+<div class="details-body">
+<p>Annual or project-specific commercial letters that vary pricing under whatever else governs: rebates, growth incentives, special pricing letters. Re-issue supersedes; project letters are time-limited. They attach to the relationship and reference the governing master or price list where one exists.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: KeyAccountCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">├── </span><span class="nd nt-ch">Rebate letter 2026</span> <span class="ntag nt-ch">[change]</span> <span class="xr">~&gt; supersedes 2025</span>
+<span class="tc">│   └── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Targets schedule</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">├── </span><span class="nd nt-ch">Growth incentive letter</span> <span class="ntag nt-ch">[change]</span>
+<span class="tc">└── </span><span class="nd nt-ch">Special pricing letter, project X</span> <span class="ntag nt-ch">[change]</span> <span class="pr">{time-limited}</span> <span class="xr">~&gt; varies price list</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>cycle: annual re-issue or project | time-limited: usually yes | varies: master or price list</dd>
+<dt>Complexity</dt><dd>Annual re-issue makes the supersedes chain the family&#x27;s backbone; the current letter is a point-in-time query, not a folder.</dd><dd>SPA collides with the supplier-side S9 sense and with Sale and Purchase Agreement; the alias registry disambiguates by category.</dd>
+</dl>
+</div>
+</details>
+<h4 class="cat-head">Suppliers (12 families)</h4>
+<details id="fam-s1">
+<summary><span class="fcode">S1.</span>Authorised distribution and channel programmes</summary>
+<div class="details-body">
+<p>Appointment is yes: the agreement confers channel status and generates programme children such as price protection, stock rotation, ship-and-debit and SPA eligibility, often through annual programme terms that re-issue each year and instruments that bind by notice rather than signature. The absence of those children is what sends a document to S2 instead.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: VendorCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-master">Distribution agreement 2018</span> <span class="ntag nt-master">[master-level]</span> <span class="pr">{appointment: yes}</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Territory schedule</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Product schedule</span> <span class="ntag nt-comp">[component]</span> <span class="pr">{updated by notice}</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Price list</span> <span class="ntag nt-comp">[component]</span> <span class="xr">~&gt; supersedes by notice</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Programme terms 2026</span> <span class="ntag nt-comp">[component]</span> <span class="xr">~&gt; supersedes 2025</span>
+<span class="tc">    │   └── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Price protection, stock rotation, S&amp;D terms</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(incorporates)</span> <span class="nd nt-sh">End-user terms</span> <span class="ntag nt-sh">[shared / by reference]</span> <span class="xr">~&gt; flows down to C10</span>
+<span class="tc">    ├── </span><span class="ek ek-l" title="lifecycle edge">(amends)</span> <span class="nd nt-ch">Amendment 1</span> <span class="ntag nt-ch">[change]</span>
+<span class="tc">    └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-ord">Our POs to vendor</span> <span class="ntag nt-ord">[order / transaction]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>appointment: yes | update mechanism: by notice for lists, signature for the master | node status: notified where bound by notice</dd>
+<dt>Complexity</dt><dd>Instruments that bind by notice are still nodes, with status notified rather than signed.</dd><dd>Annual programme terms re-issue wholesale; the supersedes chain carries the years.</dd><dd>End-user terms flow down into C10, the family&#x27;s signature cross-category edge.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-s2">
+<summary><span class="fcode">S2.</span>Master supply or purchase, no appointment</summary>
+<div class="details-body">
+<p>Buy-side relationship terms without channel status. Structurally a mirror of C2. The defining feature is the absence of programme children: no price protection, no stock rotation, no ship-and-debit eligibility.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: MakerCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-master">Master purchase agreement</span> <span class="ntag nt-master">[master-level]</span> <span class="pr">{appointment: no}</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Pricing exhibit</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Quality and delivery terms</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-ord">Our POs</span> <span class="ntag nt-ord">[order / transaction]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>appointment: no | commercial completeness: usually no</dd>
+<dt>Complexity</dt><dd>The classifier&#x27;s test against S1 is appointment plus programme children, never the title on the cover.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-s3">
+<summary><span class="fcode">S3.</span>Framework purchase with releases</summary>
+<div class="details-body">
+<p>Buy-side framework with a versioned commercial layer; blanket POs or scheduling agreements sit between framework and delivery, drawn down by releases. Forecasts hover at the edge of bindingness and are recorded as evidence with a commitment band, not as orders.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: MillCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-master">Supply agreement</span> <span class="ntag nt-master">[master-level]</span> <span class="pr">{complete: yes}</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Price list vN</span> <span class="ntag nt-comp">[component]</span> <span class="xr">~&gt; supersedes vN-1</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Volume commitment</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    ├── </span><span class="ek ek-e" title="evidence edge">(evidences)</span> <span class="nd nt-ev">Rolling forecast</span> <span class="ntag nt-ev">[evidence]</span> <span class="pr">{non-binding band}</span>
+<span class="tc">    └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-ord">Blanket PO / scheduling agreement</span> <span class="ntag nt-ord">[order / transaction]</span>
+<span class="tc">        └── </span><span class="ek ek-t" title="transactional edge">(released under)</span> <span class="nd nt-ord">Releases</span> <span class="ntag nt-ord">[order / transaction]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>commercial completeness: yes | forecast: binding band property | commitment: volume</dd>
+<dt>Complexity</dt><dd>Forecast versus commitment is the family&#x27;s recurring dispute; the binding band lives as a property on the forecast evidence node.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-s4">
+<summary><span class="fcode">S4.</span>Software and cloud partner programmes, for resale</summary>
+<div class="details-body">
+<p>Click-through partner stacks for products we resell. Nearly everything incorporated by URL and updated quarterly; the portal acceptance is the execution event. Strictly for resale: anything consumed internally is V1 or V2, never this family.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: CloudVendorCo</span> <span class="ntag nt-rel">[relationship]</span> <span class="pr">{for resale}</span>
+<span class="tc">└── </span><span class="nd nt-master">Partner agreement v2026</span> <span class="ntag nt-master">[master-level]</span> <span class="xr">~&gt; supersedes v2025</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(incorporates)</span> <span class="nd nt-sh">Programme guide (URL)</span> <span class="ntag nt-sh">[shared / by reference]</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(incorporates)</span> <span class="nd nt-sh">Product and regional terms (URL)</span> <span class="ntag nt-sh">[shared / by reference]</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">DPA</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-ord">Portal orders</span> <span class="ntag nt-ord">[order / transaction]</span> <span class="xr">~&gt; resold under C-side</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>paper: theirs, click-through | update cadence: quarterly typical | execution event: portal acceptance | purpose: resale only</dd>
+<dt>Complexity</dt><dd>Version capture on every incorporates edge is the whole game; the terms you accepted are not the terms on the website today.</dd><dd>Portal orders resold onward create back-to-back edges into customer families.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-s5">
+<summary><span class="fcode">S5.</span>Commercial agency</summary>
+<div class="details-body">
+<p>Agency proper: we act as agent, title never passes, and statutory regimes bite, notably the EU Commercial Agents Directive and Middle East agency protections with their termination compensation and registration rules. Kept apart from S6 because the statutory regime changes the risk profile of the whole family.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: PrincipalCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-master">Agency agreement</span> <span class="ntag nt-master">[master-level]</span> <span class="pr">{statutory regime: yes}</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Territory and product schedules</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Commission schedule</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    └── </span><span class="ek ek-l" title="lifecycle edge">(amends)</span> <span class="nd nt-ch">Amendments</span> <span class="ntag nt-ch">[change]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>statutory regime: EU CAD, Middle East agency law, other, none | title: never passes | registration: jurisdiction dependent</dd>
+<dt>Complexity</dt><dd>Termination is the event that matters; compensation and indemnity claims arise by statute regardless of the drafting.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-s6">
+<summary><span class="fcode">S6.</span>Commission and introducer agreements</summary>
+<div class="details-body">
+<p>A fee for winning or introducing business, one-off or ongoing, often bringing local knowledge or project expertise. No statutory agency regime, which is exactly why it is split from S5. Claims reference the project or customer that earned them, another quiet cross-category edge.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: IntroducerCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-master">Introducer agreement</span> <span class="ntag nt-master">[master-level]</span> <span class="pr">{regime: none}</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Project scope, commission terms</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    └── </span><span class="ek ek-t" title="transactional edge">(claimed under)</span> <span class="nd nt-ord">Commission claims</span> <span class="ntag nt-ord">[order / transaction]</span> <span class="xr">~&gt; references project / customer</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>regime: none | duration: one-off or ongoing | anti-bribery diligence: flag</dd>
+<dt>Complexity</dt><dd>The compliance risk is ABC-shaped, not agency-shaped; diligence evidence attaches through S12-style evidence nodes.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-s7">
+<summary><span class="fcode">S7.</span>Manufacturing and private label</summary>
+<div class="details-body">
+<p>They make to our specification or under our brand. Specifications sit under change control and version faster than the master; the quality agreement is owned by a different function; tooling has its own title and lifecycle; a brand licence rides along where private label applies.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: FactoryCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-master">Manufacturing and supply agreement</span> <span class="ntag nt-master">[master-level]</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Specifications vN</span> <span class="ntag nt-comp">[component]</span> <span class="xr">~&gt; change control</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Quality agreement</span> <span class="ntag nt-comp">[component]</span> <span class="pr">{owner: quality}</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Tooling agreement</span> <span class="ntag nt-comp">[component]</span> <span class="pr">{title: ours}</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Brand licence</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-ord">Our POs</span> <span class="ntag nt-ord">[order / transaction]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>spec control: change control process | tooling title: ours or theirs | brand licence: yes where private label</dd>
+<dt>Complexity</dt><dd>Three sub-documents with three different owners (commercial, quality, brand) under one master; ownership is a property worth recording.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-s8">
+<summary><span class="fcode">S8.</span>Terms of purchase and supplier account forms</summary>
+<div class="details-body">
+<p>Mirror of C4 on the buy side. Our terms of purchase govern by default; the supplier&#x27;s account form or acknowledgement tries to bind us into theirs, and the conflict is recorded per order with a last-shot property, never assumed at relationship level.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: PartsCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">├── </span><span class="ek ek-s" title="structural edge">(governed by)</span> <span class="nd nt-sh">Our terms of purchase vN</span> <span class="ntag nt-sh">[shared / by reference]</span>
+<span class="tc">│   └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-ord">Our PO</span> <span class="ntag nt-ord">[order / transaction]</span>
+<span class="tc">│       └── </span><span class="ek ek-t" title="transactional edge">(responds to)</span> <span class="nd nt-ord">Their acknowledgement / quote</span> <span class="ntag nt-ord">[order / transaction]</span> <span class="xr">~&gt; conflicts with ToP</span>
+<span class="tc">└── </span><span class="ek ek-n" title="root edge">(rival instrument)</span> <span class="nd nt-master">Their supplier account form</span> <span class="ntag nt-master">[master-level]</span> <span class="xr">~&gt; conflicts with ToP</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>last shot: per order | rival anchor present: yes or no</dd>
+<dt>Complexity</dt><dd>Their quote often fires first and our PO answers it, reversing the C4 sequence; direction of the responds-to edge captures which.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-s9">
+<summary><span class="fcode">S9.</span>Special pricing and programme claims</summary>
+<div class="details-body">
+<p>High-volume, short-lived commercial instruments tied to a specific customer, project or product: SPAs, deviated pricing, ship-and-debit, price protection, stock rotation, MDF and co-op, rebates. Each links to the supplier relationship and to the specific customer relationship it serves, which makes this the first family whose edges routinely cross categories. DPA here means deviated pricing agreement, a collision with data processing that the alias registry disambiguates.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: VendorCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">├── </span><span class="nd nt-ch">SPA, customer Y, project X</span> <span class="ntag nt-ch">[change]</span> <span class="pr">{time-limited}</span> <span class="xr">~&gt; references C-relationship Y</span>
+<span class="tc">│   └── </span><span class="ek ek-l" title="lifecycle edge">(extends)</span> <span class="nd nt-ch">Extension letter</span> <span class="ntag nt-ch">[change]</span>
+<span class="tc">├── </span><span class="ek ek-t" title="transactional edge">(claimed under)</span> <span class="nd nt-ord">Ship-and-debit claims</span> <span class="ntag nt-ord">[order / transaction]</span>
+<span class="tc">├── </span><span class="ek ek-t" title="transactional edge">(claimed under)</span> <span class="nd nt-ord">Price protection claims</span> <span class="ntag nt-ord">[order / transaction]</span>
+<span class="tc">└── </span><span class="ek ek-t" title="transactional edge">(claimed under)</span> <span class="nd nt-ord">MDF / co-op claims</span> <span class="ntag nt-ord">[order / transaction]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>time-limited: yes | linked customer: relationship reference mandatory | claim settlement: credit or debit memo</dd>
+<dt>Complexity</dt><dd>Volume is the challenge: thousands of short-lived nodes; the cross edges to customer relationships are the analytical payoff.</dd><dd>Every claim is a transaction node claimed under its instrument, which is what makes margin-recovery questions walkable.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-s10">
+<summary><span class="fcode">S10.</span>Services for resale, back-to-back</summary>
+<div class="details-body">
+<p>Subcontracted services we resell. Supplier SOWs mirror customer SOWs, and the mismatches between them (warranty period, liability cap, response times) are recorded as gap edges. The mirror and gap edges into C6 are the family&#x27;s purpose.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: SubcontractorCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-master">Services partner agreement</span> <span class="ntag nt-master">[master-level]</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">SLA, rate card</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    └── </span><span class="ek ek-s" title="structural edge">(agreed under)</span> <span class="nd nt-wk">SOW (back-to-back)</span> <span class="ntag nt-wk">[work instrument]</span> <span class="xr">~&gt; mirrors C6 SOW, gap: warranty</span>
+<span class="tc">        └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-ord">Work orders</span> <span class="ntag nt-ord">[order / transaction]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>mirror target: C6 SOW reference | gap register: per-term gap edges</dd>
+<dt>Complexity</dt><dd>Each material term mismatch is one gap edge with the delta as a property; the set of gap edges is the risk register.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-s11">
+<summary><span class="fcode">S11.</span>Supplier consignment and drop-ship</summary>
+<div class="details-body">
+<p>Their stock in our warehouse with title passing on our draw, or their delivery direct to our customer. The physical flow bypasses us in drop-ship while the contract flow does not, and the graph must keep the two apart.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: StockCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">├── </span><span class="nd nt-master">Consignment stock agreement</span> <span class="ntag nt-master">[master-level]</span> <span class="pr">{title: theirs until draw}</span>
+<span class="tc">│   ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Stock schedule, settlement terms</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">│   └── </span><span class="ek ek-e" title="evidence edge">(evidences)</span> <span class="nd nt-ev">Consumption reports</span> <span class="ntag nt-ev">[evidence]</span>
+<span class="tc">└── </span><span class="ek ek-l" title="lifecycle edge">(varies)</span> <span class="nd nt-ch">Drop-ship addendum</span> <span class="ntag nt-ch">[change]</span> <span class="xr">~&gt; delivery direct to C-side</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>title: theirs until draw | physical flow: through us or direct | settlement: on consumption</dd>
+<dt>Complexity</dt><dd>Drop-ship creates delivery edges to customer sites while invoicing edges stay with us; conflating the two flows is the classic modelling error.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-s12">
+<summary><span class="fcode">S12.</span>Quality and compliance evidence</summary>
+<div class="details-body">
+<p>Mostly evidence with validity periods rather than contracts: quality agreements aside, this is declarations of conformity, REACH, RoHS and conflict minerals declarations, certificates of conformity per batch, insurance certificates. Evidence attaches to products as well as to the relationship and feeds importer and distributor obligations under product regulation.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: (any supplier)</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">├── </span><span class="nd nt-master">Quality agreement</span> <span class="ntag nt-master">[master-level]</span>
+<span class="tc">├── </span><span class="nd nt-master">Code of conduct (ours, imposed)</span> <span class="ntag nt-master">[master-level]</span>
+<span class="tc">├── </span><span class="ek ek-e" title="evidence edge">(evidences)</span> <span class="nd nt-ev">DoC, CoC per batch</span> <span class="ntag nt-ev">[evidence]</span> <span class="xr">~&gt; attaches to product nodes</span>
+<span class="tc">├── </span><span class="ek ek-e" title="evidence edge">(evidences)</span> <span class="nd nt-ev">REACH, RoHS, conflict minerals declarations</span> <span class="ntag nt-ev">[evidence]</span>
+<span class="tc">└── </span><span class="ek ek-e" title="evidence edge">(evidences)</span> <span class="nd nt-ev">Insurance certificates</span> <span class="ntag nt-ev">[evidence]</span> <span class="pr">{validity window}</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>validity window: mandatory | attaches to: relationship and product | regulatory driver: importer or distributor obligations</dd>
+<dt>Complexity</dt><dd>Batch-level certificates attach to product nodes and even lots; expiry queries are the operational use case.</dd>
+</dl>
+</div>
+</details>
+<h4 class="cat-head">Vendors (11 families)</h4>
+<details id="fam-v1">
+<summary><span class="fcode">V1.</span>SaaS subscriptions</summary>
+<div class="details-body">
+<p>Own-consumption cloud software. The operative commercial instrument is the order form; the master sits above it by URL reference and can change; the negotiated security addendum prevails over the URL terms. Renewal order forms supersede their predecessors.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: SaaSCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-sh">MSA (URL) v2026</span> <span class="ntag nt-sh">[shared / by reference]</span> <span class="xr">~&gt; mutable master</span>
+<span class="tc">    ├── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-wk">Order form 2</span> <span class="ntag nt-wk">[work instrument]</span> <span class="xr">~&gt; renewal, supersedes OF1</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">DPA + SCCs</span> <span class="ntag nt-comp">[component]</span> <span class="pr">{subprocessors: URL}</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(incorporates)</span> <span class="nd nt-sh">SLA, support, AUP (URL)</span> <span class="ntag nt-sh">[shared / by reference]</span>
+<span class="tc">    └── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Security addendum (signed)</span> <span class="ntag nt-comp">[component]</span> <span class="xr">~&gt; prevails over URL terms</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>master: by URL, mutable, capture dates mandatory | operative instrument: order form | precedence: signed addendum over URL terms</dd>
+<dt>Complexity</dt><dd>Every URL incorporation carries version and capture date; the subprocessor list changes on notice and needs its own capture trail.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-v2">
+<summary><span class="fcode">V2.</span>Enterprise licence and support</summary>
+<div class="details-body">
+<p>Perpetual or term licences with annual support renewals forming a chain of new instruments, plus audit and true-up letters that amend the licensed position.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: SoftwareCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-master">Licence agreement</span> <span class="ntag nt-master">[master-level]</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Licence schedules</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    ├── </span><span class="ek ek-t" title="transactional edge">(renews under)</span> <span class="nd nt-wk">Annual support renewal 2026</span> <span class="ntag nt-wk">[work instrument]</span> <span class="xr">~&gt; chain: 2024, 2025</span>
+<span class="tc">    └── </span><span class="ek ek-l" title="lifecycle edge">(amends)</span> <span class="nd nt-ch">True-up letter</span> <span class="ntag nt-ch">[change]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>renewals: new instruments in a chain | true-ups: amendments | audit rights: flag</dd>
+<dt>Complexity</dt><dd>Renewals are instruments, not status flips; the chain answers what was supported when.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-v3">
+<summary><span class="fcode">V3.</span>IT services and outsourcing</summary>
+<div class="details-body">
+<p>Long-term managed services: master, many SOWs with independent lifecycles, service levels, exit plan, formal change control producing change notes.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: MSPCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-master">Services MSA</span> <span class="ntag nt-master">[master-level]</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(agreed under)</span> <span class="nd nt-wk">SOW 1, SOW 2</span> <span class="ntag nt-wk">[work instrument]</span> <span class="pr">{independent lifecycles}</span>
+<span class="tc">    │   └── </span><span class="ek ek-l" title="lifecycle edge">(amends)</span> <span class="nd nt-ch">Change notes</span> <span class="ntag nt-ch">[change]</span>
+<span class="tc">    └── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Service levels, exit plan</span> <span class="ntag nt-comp">[component]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>exit plan: component with its own review cycle | SOW precedence: per SOW</dd>
+<dt>Complexity</dt><dd>Exit is the family&#x27;s tail risk; the exit plan node and its currency deserve monitoring edges.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-v4">
+<summary><span class="fcode">V4.</span>Telecoms and connectivity</summary>
+<div class="details-body">
+<p>A master with hundreds of small service orders per site or circuit, each with its own minimum term and auto-renewal. The population of orders, not the master, is where the money and the notice deadlines live.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: TelcoCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-master">Master services agreement</span> <span class="ntag nt-master">[master-level]</span>
+<span class="tc">    └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-wk">Service orders per site / circuit</span> <span class="ntag nt-wk">[work instrument]</span> <span class="pr">{auto-renew, min terms}</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>auto-renew: per order | minimum term: per order | notice window: per order</dd>
+<dt>Complexity</dt><dd>Renewal-notice queries run across the order population; the master is almost never the answer.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-v5">
+<summary><span class="fcode">V5.</span>Professional advisers</summary>
+<div class="details-body">
+<p>Panel terms or outside counsel guidelines on our paper prevailing over the adviser&#x27;s terms of business, with an engagement letter per matter and fee letters varying it. The adviser&#x27;s own terms are incorporated and periodically updated.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: LawFirmLLP</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-master">Panel terms / outside counsel guidelines</span> <span class="ntag nt-master">[master-level]</span> <span class="xr">~&gt; prevail over their ToB</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(incorporates)</span> <span class="nd nt-sh">Their terms of business vN</span> <span class="ntag nt-sh">[shared / by reference]</span>
+<span class="tc">    └── </span><span class="ek ek-s" title="structural edge">(engaged under)</span> <span class="nd nt-wk">Engagement letter per matter</span> <span class="ntag nt-wk">[work instrument]</span>
+<span class="tc">        └── </span><span class="ek ek-l" title="lifecycle edge">(varies)</span> <span class="nd nt-ch">Fee letters, scope changes</span> <span class="ntag nt-ch">[change]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>precedence: our guidelines over their ToB | granularity: one engagement per matter</dd>
+<dt>Complexity</dt><dd>Matter-level engagement letters map one-to-one onto matters in practice management, a natural join to a different master data set.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-v6">
+<summary><span class="fcode">V6.</span>Recruitment, staffing and contractors</summary>
+<div class="details-body">
+<p>Agency terms of business with assignment schedules, consultancy agreements with SOWs, employer of record arrangements with country addenda. Introduction fees and off-payroll status are the recurring properties. Employment contracts are out of scope, a people category to decide separately.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: AgencyCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">├── </span><span class="nd nt-master">Agency terms of business</span> <span class="ntag nt-master">[master-level]</span>
+<span class="tc">│   └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-wk">Assignment schedules</span> <span class="ntag nt-wk">[work instrument]</span>
+<span class="tc">└── </span><span class="nd nt-master">Consultancy agreement</span> <span class="ntag nt-master">[master-level]</span>
+<span class="tc">    └── </span><span class="ek ek-s" title="structural edge">(agreed under)</span> <span class="nd nt-wk">SOWs</span> <span class="ntag nt-wk">[work instrument]</span> <span class="pr">{off-payroll status}</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>introduction fee: window and amount | off-payroll: status per engagement</dd>
+<dt>Complexity</dt><dd>Assignment schedules carry person references, joining contract data to people data with the obvious privacy overlay.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-v7">
+<summary><span class="fcode">V7.</span>Property</summary>
+<div class="details-body">
+<p>Agreement for lease into lease, then a long life of deeds and consents: rent deposit deed, licences to alter, assign or sublet, deeds of variation, personal side letters, rent review memoranda, break notices, subleases. Deeds, statutory overlay and decade-scale lifecycles make this the slowest family in the graph.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: LandlordCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-master">Agreement for lease</span> <span class="ntag nt-master">[master-level]</span>
+<span class="tc">    └── </span><span class="ek ek-s" title="structural edge">(granted under)</span> <span class="nd nt-master">Lease</span> <span class="ntag nt-master">[master-level]</span> <span class="pr">{deed, long life}</span>
+<span class="tc">        ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Rent deposit deed</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">        ├── </span><span class="ek ek-s" title="structural edge">(consented under)</span> <span class="nd nt-comp">Licences to alter / assign / sublet</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">        ├── </span><span class="ek ek-l" title="lifecycle edge">(varies)</span> <span class="nd nt-ch">Deed of variation, side letter</span> <span class="ntag nt-ch">[change]</span> <span class="pr">{side letter: personal}</span>
+<span class="tc">        ├── </span><span class="ek ek-e" title="evidence edge">(evidences)</span> <span class="nd nt-ev">Rent review memorandum</span> <span class="ntag nt-ev">[evidence]</span>
+<span class="tc">        ├── </span><span class="ek ek-l" title="lifecycle edge">(terminates)</span> <span class="nd nt-ch">Break notice</span> <span class="ntag nt-ch">[change]</span>
+<span class="tc">        └── </span><span class="ek ek-s" title="structural edge">(granted under)</span> <span class="nd nt-master">Sublease</span> <span class="ntag nt-master">[master-level]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>instrument form: deed | side letters: personal, non-transferable flag | statutory overlay: jurisdiction</dd>
+<dt>Complexity</dt><dd>Personal side letters do not bind successors; the personal flag changes what a due diligence walk may rely on.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-v8">
+<summary><span class="fcode">V8.</span>Facilities and equipment</summary>
+<div class="details-body">
+<p>Master hire or lease with equipment schedules per asset, acceptance certificates, extensions and returns, plus FM contracts with site schedules and SLAs. The master-plus-schedules shape is the C1 pattern wearing overalls.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: HireCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="nd nt-master">Master lease / hire agreement</span> <span class="ntag nt-master">[master-level]</span>
+<span class="tc">    ├── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-wk">Equipment schedule per asset</span> <span class="ntag nt-wk">[work instrument]</span>
+<span class="tc">    │   ├── </span><span class="ek ek-e" title="evidence edge">(evidences)</span> <span class="nd nt-ev">Acceptance certificate</span> <span class="ntag nt-ev">[evidence]</span>
+<span class="tc">    │   └── </span><span class="ek ek-l" title="lifecycle edge">(extends)</span> <span class="nd nt-ch">Extension / return note</span> <span class="ntag nt-ch">[change]</span>
+<span class="tc">    └── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">FM site schedules, SLAs</span> <span class="ntag nt-comp">[component]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>per-asset schedules: one node per asset | acceptance: evidence gate for payment</dd>
+<dt>Complexity</dt><dd>Asset schedules join to fixed-asset registers, another master data set outside this spine but linkable by the same discipline.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-v9">
+<summary><span class="fcode">V9.</span>Logistics and fleet</summary>
+<div class="details-body">
+<p>Logistics services agreements with versioned rate cards, lane and site schedules, KPI schedules and annual rate letters; carrier agreements incorporating standard carrier conditions with their own liability limits; customs brokerage; fleet master leases. Borderline by design: the cost is recharged to customers but the service is consumed by us, so vendor.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: 3PLCo</span> <span class="ntag nt-rel">[relationship]</span> <span class="pr">{cost recharged, service consumed by us}</span>
+<span class="tc">└── </span><span class="nd nt-master">Logistics services agreement</span> <span class="ntag nt-master">[master-level]</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Rate card vN, lane and site schedules</span> <span class="ntag nt-comp">[component]</span> <span class="xr">~&gt; supersedes annually</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(incorporates)</span> <span class="nd nt-sh">Standard carrier conditions</span> <span class="ntag nt-sh">[shared / by reference]</span> <span class="pr">{own liability limits}</span>
+<span class="tc">    └── </span><span class="ek ek-l" title="lifecycle edge">(varies)</span> <span class="nd nt-ch">Annual rate letters</span> <span class="ntag nt-ch">[change]</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>incorporated conditions: liability limits recorded | rate cycle: annual</dd>
+<dt>Complexity</dt><dd>Incorporated carrier conditions cap liability far below cargo value; the limit belongs on the incorporates edge where an agent will trip over it.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-v10">
+<summary><span class="fcode">V10.</span>Banking, finance and insurance</summary>
+<div class="details-body">
+<p>Facility agreements with security documents cutting across group entities, compliance certificates, amendments and waivers; insurance policies with schedules, endorsements and renewals; credit insurance whose buyer limits point at customer master data, a deliberate cross-category edge. Lumped as one family for now; splitting finance from insurance is a known candidate refinement.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: BankCo / InsurerCo</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">├── </span><span class="nd nt-master">Facility agreement</span> <span class="ntag nt-master">[master-level]</span>
+<span class="tc">│   ├── </span><span class="ek ek-s" title="structural edge">(secured by)</span> <span class="nd nt-sec">Debenture, charges</span> <span class="ntag nt-sec">[security]</span> <span class="xr">~&gt; cross group entities</span>
+<span class="tc">│   ├── </span><span class="ek ek-e" title="evidence edge">(evidences)</span> <span class="nd nt-ev">Compliance certificates</span> <span class="ntag nt-ev">[evidence]</span>
+<span class="tc">│   └── </span><span class="ek ek-l" title="lifecycle edge">(amends)</span> <span class="nd nt-ch">Amendments and waivers</span> <span class="ntag nt-ch">[change]</span>
+<span class="tc">└── </span><span class="nd nt-master">Insurance policy</span> <span class="ntag nt-master">[master-level]</span>
+<span class="tc">    ├── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Schedule</span> <span class="ntag nt-comp">[component]</span>
+<span class="tc">    ├── </span><span class="ek ek-l" title="lifecycle edge">(amends)</span> <span class="nd nt-ch">Endorsements, renewals</span> <span class="ntag nt-ch">[change]</span>
+<span class="tc">    └── </span><span class="ek ek-s" title="structural edge">(forms part of)</span> <span class="nd nt-comp">Credit insurance buyer limits</span> <span class="ntag nt-comp">[component]</span> <span class="xr">~&gt; points at customer master data</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>security scope: entities charged | buyer limits: per customer account | covenant evidence: certificate cycle</dd>
+<dt>Complexity</dt><dd>Security documents bind entities that never trade with the counterparty; the party edges are the point.</dd><dd>Credit insurance buyer limits are vendor-category nodes pointing at customer accounts, the graph&#x27;s most useful cross-category edge for credit control.</dd>
+</dl>
+</div>
+</details>
+<details id="fam-v11">
+<summary><span class="fcode">V11.</span>Indirect goods and services</summary>
+<div class="details-body">
+<p>The long tail: terms of purchase, PO, invoice, mostly auto-renewing, individually small and collectively noisy. Marketing agencies, sponsorships, memberships, data subscriptions, travel, utilities. Low modelling depth by design: invariant edges, dates and renewal flags.</p>
+<pre class="tree" tabindex="0"><span class="tc"></span><span class="nd nt-rel">Relationship: (misc vendors)</span> <span class="ntag nt-rel">[relationship]</span>
+<span class="tc">└── </span><span class="ek ek-s" title="structural edge">(governed by)</span> <span class="nd nt-sh">Terms of purchase vN</span> <span class="ntag nt-sh">[shared / by reference]</span>
+<span class="tc">    └── </span><span class="ek ek-t" title="transactional edge">(placed under)</span> <span class="nd nt-ord">PO</span> <span class="ntag nt-ord">[order / transaction]</span>
+<span class="tc">        └── </span><span class="ek ek-t" title="transactional edge">(settled by)</span> <span class="nd nt-ord">Invoice</span> <span class="ntag nt-ord">[order / transaction]</span> <span class="pr">{auto-renew, high volume}</span></pre>
+<dl class="dl-inline">
+<dt>Properties</dt><dd>modelling depth: minimal | renewal: auto flags and dates</dd>
+<dt>Complexity</dt><dd>The catch-all discipline matters most here: function tags and invariant edges even where family confidence is low.</dd>
+</dl>
+</div>
+</details>
+<h3>The six overlays</h3>
+<p>An overlay is not a family. It is a set of node types and edges that can appear under any family tree in any category: a guarantee secures obligations wherever they arise, a data processing agreement forms part of whatever master it was signed under.</p>
+<details id="ov-o1">
+<summary><span class="fcode">O1.</span>Security</summary>
+<div class="details-body">
+<p>Instruments that secure obligations arising anywhere in the graph. Guarantees (parent, bank, personal), promissory notes and post-dated cheques (Middle East practice), letters of credit by type (sight, usance, standby, confirmed), bonds (performance, advance payment, retention), charges. Each has its own lifecycle (expiry, release, calls) and party edges into master data, because the guarantor is rarely the account holder.</p>
+<dl class="dl-inline">
+<dt>Node examples</dt><dd>Guarantee; Promissory Note; Post-Dated Cheque; Letter of Credit; Bond; Charge; Debenture</dd>
+<dt>Key edges</dt><dd>secures -&gt; obligations or agreements in any family; party edges -&gt; guarantor legal entity in master data</dd>
+</dl>
+</div>
+</details>
+<details id="ov-o2">
+<summary><span class="fcode">O2.</span>Dispute resolution</summary>
+<div class="details-body">
+<p>Standstill agreements, settlement agreements, Tomlin and consent orders, waiver letters. Rare, but their extinguishes edges point at obligations elsewhere in the graph, which makes them disproportionately valuable to model.</p>
+<dl class="dl-inline">
+<dt>Node examples</dt><dd>Standstill Agreement; Settlement Agreement; Tomlin Order; Consent Order; Waiver Letter</dd>
+<dt>Key edges</dt><dd>extinguishes -&gt; obligations or claims anywhere in the graph; varies -&gt; surviving terms</dd>
+</dl>
+</div>
+</details>
+<details id="ov-o3">
+<summary><span class="fcode">O3.</span>Pre-contract</summary>
+<div class="details-body">
+<p>NDAs, LOIs and heads of terms, bids and tender submissions, teaming agreements. Carries the superseded-by-master property, because whether the master supersedes the NDA is a question every family inherits. oneNDA is the canonical standard-form node here.</p>
+<dl class="dl-inline">
+<dt>Node examples</dt><dd>NDA (oneNDA canonical); CDA; LOI; Heads of Terms; MOU; Bid; Tender Submission; Teaming Agreement</dd>
+<dt>Key edges</dt><dd>superseded by -&gt; master (property: yes or no); incorporated into -&gt; master</dd>
+</dl>
+</div>
+</details>
+<details id="ov-o4">
+<summary><span class="fcode">O4.</span>Codes and policies</summary>
+<div class="details-body">
+<p>Customer-imposed supplier codes of conduct pointing at us, and our codes imposed on suppliers. Sometimes made contractual, often standalone; the contractual flag is the property that matters.</p>
+<dl class="dl-inline">
+<dt>Node examples</dt><dd>Supplier Code of Conduct (theirs -&gt; us); Code of Conduct (ours -&gt; suppliers); ESG Policy; Anti-Bribery Policy</dd>
+<dt>Key edges</dt><dd>incorporates or references from any family master; contractual: yes or no</dd>
+</dl>
+</div>
+</details>
+<details id="ov-o5">
+<summary><span class="fcode">O5.</span>Trading channels</summary>
+<div class="details-body">
+<p>EDI, API and PunchOut. Usually a schedule inside another family because an underlying contract is typically negotiated; occasionally a standalone trading partner agreement. E-commerce accounts are a family (C12), not this overlay. Agent-based ordering is a reserved future channel type.</p>
+<dl class="dl-inline">
+<dt>Node examples</dt><dd>EDI Schedule; API Schedule; PunchOut Schedule; Trading Partner Agreement; cXML Agreement</dd>
+<dt>Key edges</dt><dd>forms part of -&gt; governing family master; enables -&gt; transaction layer channel property</dd>
+</dl>
+</div>
+</details>
+<details id="ov-o6">
+<summary><span class="fcode">O6.</span>Data protection</summary>
+<div class="details-body">
+<p>DPAs, SCCs or IDTA, joint controller terms, transfer assessments. The same node types appear in every category with the distributor&#x27;s role flipping between controller and processor. Facts are typed like any other terms; DPA here means data processing, disambiguated from the S9 sense by category.</p>
+<dl class="dl-inline">
+<dt>Node examples</dt><dd>DPA (data processing sense); SCCs; IDTA; Joint Controller Terms; Transfer Risk Assessment</dd>
+<dt>Key edges</dt><dd>forms part of -&gt; any family master; role property: controller, processor, joint</dd>
+</dl>
+</div>
+</details>
+</section>
+<section id="layer-l3" aria-labelledby="h-l3">
+<p class="layer-tag">Layer 3</p>
+<h2 id="h-l3">Content</h2>
+<p>What the paper actually says, in four sub-layers. Each one is optional: a document with no content layer at all is still a working node, which is the point of the degradation ladder.</p>
+<div class="scroll"><table>
+<thead><tr><th scope="col">Sub-layer</th><th scope="col">What it holds</th></tr></thead><tbody>
+<tr><td>Structure</td><td>Clause nodes with stable identifiers, using the Akoma Ntoso eId naming convention (doc#cl_14), so that an amendment can point at a clause rather than at a document.</td></tr>
+<tr><td>Classification</td><td>SALI LMSS IRIs on documents and clauses, applied through tagged-as edges. One clause vocabulary, not several.</td></tr>
+<tr><td>Terms</td><td>Term facts: Concerto-typed extracted values, bi-temporal, with a supersedes chain so that the question is not what the cap is but what the cap was on a given date.</td></tr>
+<tr><td>Obligations</td><td>ODRL-shaped duties, permissions and prohibitions, each with obligor and obligee edges back into master data, which is the invariant reappearing at clause level.</td></tr>
+</tbody></table></div>
+<h3>The standards stack</h3>
+<p>Nineteen slots, grouped by what we do with them. The dropped rows are here on purpose: a standard that names what it rejected, and why, is easier to trust than one that lists only what it likes.</p>
+<h4>Adopt</h4>
+<p class="status-note">Taken as it stands and referenced normatively.</p>
+<div class="scroll"><table class="std">
+<thead><tr><th scope="col">Slot</th><th scope="col">Standard</th><th scope="col">Steward</th><th scope="col">What we take</th><th scope="col">Adoption evidence</th></tr></thead><tbody>
+<tr><td>Clause and document vocabulary</td><td><a href="https://sali.org">SALI LMSS</a></td><td>SALI Alliance</td><td>IRIs for document types, clause components, player roles; family registry carries matching IRIs</td><td>Thomson Reuters, LexisNexis, NetDocuments, iManage; DLA Piper, Clifford Chance; Microsoft, Intel legal departments</td></tr>
+<tr><td>Transaction documents</td><td><a href="https://docs.oasis-open.org/ubl/">UBL (ISO/IEC 19845)</a></td><td>OASIS / ISO</td><td>Order, order response, despatch advice, invoice shapes; DocumentReference carries placed-under</td><td>Peppol network; EU e-invoicing mandates; shipped by major ERPs</td></tr>
+<tr><td>Deal-point schemas</td><td><a href="https://accordproject.org">Concerto (Accord Project)</a></td><td>Linux Foundation</td><td>Typed models of expected terms per family; extraction targets that validate structurally</td><td>DocuSign Iris maps extractions to Concerto models; supported by DocuSign, IBM</td></tr>
+<tr><td>Obligations</td><td><a href="https://www.w3.org/TR/odrl-model/">ODRL</a></td><td>W3C (Recommendation)</td><td>Duty, permission, prohibition shape with obligor, obligee, constraints</td><td>Catena-X policies; Dataspace Protocol; IDSA and Gaia-X specifications</td></tr>
+<tr><td>Entity identifiers</td><td><a href="https://www.gleif.org">LEI (ISO 17442) + GLEIF relationship data</a></td><td>GLEIF</td><td>Entity identifier scheme; open parent-subsidiary graph</td><td>Regulatorily mandated in financial reporting; open data</td></tr>
+<tr><td>Location and product identifiers</td><td><a href="https://www.gs1.org">GS1 GLN and GTIN</a></td><td>GS1</td><td>Site and product identifier schemes</td><td>Global retail and logistics backbone</td></tr>
+<tr><td>Product classification</td><td><a href="https://www.unspsc.org">UNSPSC or ETIM</a></td><td>GS1 US / ETIM International</td><td>Classification codes on product nodes</td><td>Widely used in distribution and e-procurement</td></tr>
+<tr><td>Reference data</td><td><a href="https://www.iso.org">ISO 3166, 4217, 6523, 8000</a></td><td>ISO</td><td>Countries, currencies, identifier scheme registry, master data quality</td><td>Universal</td></tr>
+</tbody></table></div>
+<h4>Adopt as the standard form</h4>
+<p class="status-note">Adopted as the canonical form for the node it fills.</p>
+<div class="scroll"><table class="std">
+<thead><tr><th scope="col">Slot</th><th scope="col">Standard</th><th scope="col">Steward</th><th scope="col">What we take</th><th scope="col">Adoption evidence</th></tr></thead><tbody>
+<tr><td>Standard-form NDA (O3)</td><td><a href="https://onenda.org">oneNDA</a></td><td>oneNDA / Claustack community</td><td>Canonical pre-contract node</td><td>3,000+ organisations including Coca-Cola, UBS, Panasonic, Revolut; SteerCo incl. Airbus, Barclays, A&amp;O, Freshfields, Linklaters</td></tr>
+</tbody></table></div>
+<h4>Adopt the pattern</h4>
+<p class="status-note">The shape is borrowed, the technology is not.</p>
+<div class="scroll"><table class="std">
+<thead><tr><th scope="col">Slot</th><th scope="col">Standard</th><th scope="col">Steward</th><th scope="col">What we take</th><th scope="col">Adoption evidence</th></tr></thead><tbody>
+<tr><td>Lifecycle event pattern</td><td><a href="https://cdm.finos.org">FINOS CDM</a></td><td>FINOS / Linux Foundation with ISDA, ICMA, ISLA</td><td>Amendment, novation, termination as typed events producing new states</td><td>JPMorgan production use; BNP, BMO, RBC; JSCC first CCP in production</td></tr>
+<tr><td>Stable clause IDs</td><td><a href="https://docs.oasis-open.org/legaldocml/">Akoma Ntoso eId convention</a></td><td>OASIS LegalDocML</td><td>Naming convention only: doc#cl_n identifiers and hierarchy plus cross-reference model</td><td>European Parliament, EU institutions, UN system for legislative documents</td></tr>
+</tbody></table></div>
+<h4>Test set, validation only</h4>
+<p class="status-note">Used to validate extraction, not part of the standard.</p>
+<div class="scroll"><table class="std">
+<thead><tr><th scope="col">Slot</th><th scope="col">Standard</th><th scope="col">Steward</th><th scope="col">What we take</th><th scope="col">Adoption evidence</th></tr></thead><tbody>
+<tr><td>Extraction benchmark</td><td><a href="https://www.atticusprojectai.org/cuad">CUAD</a></td><td>Atticus Project</td><td>Validation set for clause extraction; not part of the standard</td><td>De facto benchmark across legal AI extraction research and vendor evals</td></tr>
+</tbody></table></div>
+<h4>Optional adapter</h4>
+<p class="status-note">Available where the family calls for it, not required.</p>
+<div class="scroll"><table class="std">
+<thead><tr><th scope="col">Slot</th><th scope="col">Standard</th><th scope="col">Steward</th><th scope="col">What we take</th><th scope="col">Adoption evidence</th></tr></thead><tbody>
+<tr><td>Public sector adapter (C11)</td><td><a href="https://standard.open-contracting.org">OCDS</a></td><td>Open Contracting Partnership</td><td>Mapping for authority-side procurement data where relevant</td><td>50+ governments; G20 endorsed</td></tr>
+</tbody></table></div>
+<h4>Noted, used with care</h4>
+<p class="status-note">Recorded because it is everywhere, not because it is open.</p>
+<div class="scroll"><table class="std">
+<thead><tr><th scope="col">Slot</th><th scope="col">Standard</th><th scope="col">Steward</th><th scope="col">What we take</th><th scope="col">Adoption evidence</th></tr></thead><tbody>
+<tr><td>Common commercial identifier</td><td><a href="https://www.dnb.com">DUNS</a></td><td>Dun &amp; Bradstreet</td><td>Ubiquitous but proprietary; store as one identifier scheme among several, never the primary key</td><td>Universal in credit and supplier onboarding</td></tr>
+</tbody></table></div>
+<h4>Research input</h4>
+<p class="status-note">Feeds the priority order for extraction work.</p>
+<div class="scroll"><table class="std">
+<thead><tr><th scope="col">Slot</th><th scope="col">Standard</th><th scope="col">Steward</th><th scope="col">What we take</th><th scope="col">Adoption evidence</th></tr></thead><tbody>
+<tr><td>Negotiated-terms research</td><td><a href="https://www.worldcc.com">WorldCC most-negotiated terms</a></td><td>WorldCC</td><td>Priority order for which deal points each family model extracts first</td><td>Industry-standard annual study</td></tr>
+</tbody></table></div>
+<h4>Dropped</h4>
+<p class="status-note">Considered and rejected, with the reason kept in the open.</p>
+<div class="scroll"><table class="std">
+<thead><tr><th scope="col">Slot</th><th scope="col">Standard</th><th scope="col">Steward</th><th scope="col">What we take</th><th scope="col">Adoption evidence</th></tr></thead><tbody>
+<tr><td>Deontic logic</td><td><a href="https://docs.oasis-open.org/legalruleml/">LegalRuleML</a></td><td>OASIS</td><td>Nothing; ODRL covers the need at our depth</td><td>Academic adoption only</td></tr>
+<tr><td>Privacy vocabulary</td><td><a href="https://w3c.github.io/dpv/">DPV</a></td><td>W3C community group</td><td>Nothing; O6 facts typed in Concerto like all terms</td><td>Community group output, no Recommendation status, no blue-chip adopters identified</td></tr>
+<tr><td>Fine-grained clause labels</td><td><a href="https://aclanthology.org">LEDGAR</a></td><td>academic (LexGLUE)</td><td>Nothing; SALI is the sole clause vocabulary</td><td>Academic dataset</td></tr>
+<tr><td>Standard-form agreements</td><td><a href="https://commonpaper.com">Common Paper, Bonterms</a></td><td>Common Paper Inc / Bonterms</td><td>Design-pattern evidence only: cover page plus standard terms mirrors shared-node plus deal-points</td><td>Real users, but startup-published forms rather than standards</td></tr>
+</tbody></table></div>
+</section>
+<section id="layer-l4" aria-labelledby="h-l4">
+<p class="layer-tag">Layer 4</p>
+<h2 id="h-l4">Transaction</h2>
+<p>Orders, order responses, invoices and claims. This layer is already standardised and we do not reinvent it: UBL (ISO/IEC 19845) gives the order, order response, despatch advice and invoice shapes, and its <code>DocumentReference</code> element is where the placed-under link lives when the transaction travels between systems.</p>
+<p>Inside the graph, <code>placed_under</code> attaches a transaction to the lowest node that actually governs it, not to the top of the tree. A purchase order under a local participation points at the participation, not at the global master; the walk up to the master is a query, not a stored edge. Alongside it, <code>ordered_by</code> points at the account, which is the second half of the invariant and the reason a transaction can always be attributed even when the paperwork above it is a mess.</p>
+<div class="scroll"><table>
+<thead><tr><th scope="col">Node type</th><th scope="col">Definition</th><th scope="col">Examples</th></tr></thead><tbody>
+<tr><td><code>order</code></td><td>PO, call-off, release, blanket, web order</td><td><code>PO 4471</code></td></tr>
+<tr><td><code>order_response</code></td><td>Acknowledgement, confirmation, quote in response</td><td><code>OA 4471-A</code></td></tr>
+<tr><td><code>invoice</code></td><td>Billing document</td><td><code>INV-2026-118</code></td></tr>
+<tr><td><code>claim</code></td><td>Programme or commercial claim</td><td><code>ship-and-debit claim</code></td></tr>
+</tbody></table></div>
+</section>
+<section id="cross-category" aria-labelledby="h-xcat">
+<h2 id="h-xcat">Edges that cross categories</h2>
+<p>The customer, supplier and vendor sides are usually run by different teams with different systems. These four edges are where the money and the risk actually sit, and every one of them is invisible in a folder structure.</p>
+<div class="callout"><ul class="xcat">
+<li><b>S9 references</b> <span class="edges">references</span><br>A special pricing agreement sits in the supplier tree but is priced for a named customer. The references edge runs from the supplier-side instrument to the customer relationship, which is how a ship-and-debit claim can be tied back to the customer it was won for.</li>
+<li><b>S10 mirrors and gap</b> <span class="edges">mirrors, gap</span><br>A back-to-back services subcontract mirrors the customer statement of work. The mirrors edge pairs them; the gap edge carries the delta as a property. That pair of edges is the risk register: everything we promised the customer that the subcontractor did not promise us.</li>
+<li><b>V10 limits</b> <span class="edges">limits</span><br>A credit insurance buyer limit is a component in the vendor tree that points, through a limits edge, at a customer account in master data. The finance side and the trading side meet on that edge.</li>
+<li><b>S1 flows down to C10</b> <span class="edges">flows_down_to</span><br>Vendor end-user terms accepted in the supplier tree have to reach the reseller customer. The flows-down-to edge crosses from a supplier-side shared terms node into the customer relationship, which no folder structure can show.</li>
+</ul></div>
+</section>
+<section id="catch-all" aria-labelledby="h-catch">
+<h2 id="h-catch">When nothing fits</h2>
+<p>Every category carries an X0 unclassified family: C0, S0 and V0 in <code>registries/families.csv</code>. A document that cannot be placed is never left out of the graph, because a document outside the graph is a document nobody will find again.</p>
+<ol class="process">
+<li>Assign a function tag from the closed list: governs, transacts, changes, secures, evidences, resolves, enables_channel, pre_contract. This is nearly always determinable from the first page.</li>
+<li>Attach the document to its relationship with status provisional and a confidence score.</li>
+<li>Put it in the human review queue, ordered by value at risk rather than by date.</li>
+<li>Feed the reviewer&#x27;s outcome back into the alias dictionary, so the same cover page classifies itself next time.</li>
+<li>Where a cluster of unclassified documents recurs, raise it as a new-family proposal rather than stretching an existing test.</li>
+<li>Track unclassified rate per category as the standing metric, and expect it to trend down.</li>
+</ol>
+</section>
+<section id="repo" aria-labelledby="h-repo">
+<h2 id="h-repo">The repository</h2>
+<div class="scroll"><table class="repo">
+<thead><tr><th scope="col">Path</th><th scope="col">What it is</th></tr></thead><tbody>
+<tr><td><code>README.md</code></td><td>What DCG is, the invariant, the layers, and how to regenerate.</td></tr>
+<tr><td><code>explainer.html</code></td><td>This page. Self-contained, no external requests.</td></tr>
+<tr><td><code>BUILD-REPORT.md</code></td><td>Validation output, counts, judgement calls and open TODOs.</td></tr>
+<tr><td><code>build/data.py</code></td><td>The single source of truth: families, overlays, registries, sample graph.</td></tr>
+<tr><td><code>build/build.py</code></td><td>The generator. Standard library only.</td></tr>
+<tr><td><code>families/</code></td><td>One markdown file per category, plus overlays and an index.</td></tr>
+<tr><td><code>registries/</code></td><td>Seven CSVs: node types, edge types, families, aliases, properties, overlays, standards.</td></tr>
+<tr><td><code>sample/</code></td><td>A 62 node, 83 edge worked graph with load instructions and worked queries.</td></tr>
+</tbody></table></div>
+<p>Everything derived from <code>build/data.py</code> is generated. Regenerate the whole package, this page included, with <code>python3 build/build.py</code> from the repository root; the build fails on any validation error and prints the counts it asserted.</p>
+</section>
+</main>
+</div>
+<footer><div class="wrap">
+<p><strong>Distributor Contract Graph v0.1.0.</strong> Versioned with semantic versioning. Proposed licence: CC BY 4.0 for the text and the registries, marked as a proposal to confirm before release.</p>
+<p>A practitioner-built open standard. It was written by people who have had to answer these questions against real filing systems, and it is published so that the next team does not have to derive it again. Corrections and family proposals are more useful than agreement.</p>
+</div></footer>
+<script>
+(function () {
+  var main = document.getElementById('content');
+  if (!main) return;
+
+  var bar = document.createElement('div');
+  bar.className = 'controls';
+  [['Expand all', true], ['Collapse all', false]].forEach(function (pair) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = pair[0];
+    b.addEventListener('click', function () {
+      var blocks = document.querySelectorAll('#layer-l2 details');
+      for (var i = 0; i < blocks.length; i++) { blocks[i].open = pair[1]; }
+    });
+    bar.appendChild(b);
+  });
+  var anchor = document.getElementById('families-controls');
+  if (anchor) { anchor.appendChild(bar); }
+
+  var links = {};
+  var navLinks = document.querySelectorAll('nav.strata a');
+  for (var i = 0; i < navLinks.length; i++) {
+    links[navLinks[i].getAttribute('href').slice(1)] = navLinks[i];
+  }
+  if (!('IntersectionObserver' in window)) return;
+  var current = null;
+  var io = new IntersectionObserver(function (entries) {
+    for (var i = 0; i < entries.length; i++) {
+      if (!entries[i].isIntersecting) continue;
+      var id = entries[i].target.id;
+      if (!links[id] || current === id) continue;
+      if (current && links[current]) { links[current].removeAttribute('aria-current'); }
+      links[id].setAttribute('aria-current', 'true');
+      current = id;
+    }
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  var sections = document.querySelectorAll('main section[id]');
+  for (var j = 0; j < sections.length; j++) { io.observe(sections[j]); }
+})();
+</script>
+</body>
+</html>
